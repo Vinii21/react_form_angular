@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   templateUrl: './dynamic-page.component.html',
@@ -7,6 +7,8 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
   ]
 })
 export class DynamicPageComponent {
+
+  public inputNewFavorite: FormControl = new FormControl("", Validators.required);
 
   public myForm: FormGroup = this.fb.group({
     name: ["", [Validators.required, Validators.minLength(3)]],
@@ -22,6 +24,35 @@ export class DynamicPageComponent {
     return this.myForm.get("favoriteGames") as FormArray;
   }
 
+  isValidField(field:string): boolean | null {
+    return this.myForm.controls[field].errors
+    && this.myForm.controls[field].touched;
+  }
+
+  isValidFiledInArray(formArray: FormArray, index: number) {
+    return formArray.controls[index].errors
+    && formArray.controls[index].touched;
+  }
+
+  getFieldError(field: string): string | null {
+    if(!this.myForm.controls[field]) return null;
+
+    const errors = this.myForm.controls[field].errors || {};
+
+    for (const key of Object.keys(errors)) {
+      switch(key) {
+        case "required":
+          return "Este campo es requerido";
+        case "minlength":
+          return `Mínimo ${errors["minlength"].requiredLength} caracteres`;
+
+      }
+    }
+
+    return null;
+
+  }
+
   onSubmit():void {
 
     if(this.myForm.invalid) {
@@ -29,7 +60,26 @@ export class DynamicPageComponent {
       return;
     }
 
-    console.log(this.myForm.value)
+    console.log(this.myForm.value);
+
+    (this.myForm.controls["favoriteGames"] as FormArray) = this.fb.array([]);
+    this.myForm.reset()
+  }
+
+  onAddToFavorite():void {
+    if(this.inputNewFavorite.invalid) return;
+
+    const newGame = this.inputNewFavorite.value;
+
+    //this.favoriteGames.push(new FormControl(newGame, Validators.required));
+    this.favoriteGames.push(
+      this.fb.control(newGame, Validators.required)
+    );
+
+  }
+
+  onDeleteFavorite(index:number):void {
+    this.favoriteGames.removeAt(index);
   }
 
 }
